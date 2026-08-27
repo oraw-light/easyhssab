@@ -16,7 +16,7 @@ export default async function EmployeesPage() {
     <div className="space-y-8">
       <h2 className="text-2xl font-serif font-black">Employés & Paie</h2>
 
-      <form action={addEmployee} className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+      <form action={addEmployee} className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <label className="flex flex-col gap-1 text-xs font-bold text-[#8C7B6E]">
           Nom
           <input type="text" name="name" required className="border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-sm" />
@@ -37,7 +37,7 @@ export default async function EmployeesPage() {
           Salaire de base ({currency})
           <input type="number" step="0.01" name="baseSalary" required className="border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-sm" />
         </label>
-        <div className="flex flex-col gap-1.5">
+        <div className="col-span-full flex items-center justify-between gap-4 pt-2 border-t border-gray-100">
           <div className="flex gap-3">
             <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C7B6E]">
               <input type="checkbox" name="cnssRegistered" defaultChecked className="w-4 h-4" /> CNSS
@@ -46,7 +46,7 @@ export default async function EmployeesPage() {
               <input type="checkbox" name="amoRegistered" defaultChecked className="w-4 h-4" /> AMO
             </label>
           </div>
-          <button type="submit" className="bg-[#1A1A1A] text-white text-xs font-extrabold uppercase tracking-widest rounded-xl py-2.5 px-4 hover:bg-[#C4A484] hover:text-[#1A1A1A] transition">
+          <button type="submit" className="bg-[#1A1A1A] text-white text-xs font-extrabold uppercase tracking-widest rounded-xl py-2.5 px-6 hover:bg-[#C4A484] hover:text-[#1A1A1A] transition">
             Ajouter
           </button>
         </div>

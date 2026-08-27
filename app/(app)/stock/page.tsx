@@ -15,7 +15,7 @@ export default async function StockPage() {
     <div className="space-y-8">
       <h2 className="text-2xl font-serif font-black">Stocks</h2>
 
-      <form action={addStockItem} className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+      <form action={addStockItem} className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <label className="flex flex-col gap-1 text-xs font-bold text-[#8C7B6E]">
           Nom
           <input type="text" name="name" required className="border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-sm" />
@@ -40,9 +40,11 @@ export default async function StockPage() {
           Coût unitaire ({currency})
           <input type="number" step="0.01" name="unitCost" required className="border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-sm" />
         </label>
-        <button type="submit" className="bg-[#1A1A1A] text-white text-xs font-extrabold uppercase tracking-widest rounded-xl py-2.5 px-4 hover:bg-[#C4A484] hover:text-[#1A1A1A] transition lg:col-span-1">
-          Ajouter
-        </button>
+        <div className="col-span-full flex justify-end pt-2 border-t border-gray-100">
+          <button type="submit" className="bg-[#1A1A1A] text-white text-xs font-extrabold uppercase tracking-widest rounded-xl py-2.5 px-6 hover:bg-[#C4A484] hover:text-[#1A1A1A] transition">
+            Ajouter
+          </button>
+        </div>
       </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

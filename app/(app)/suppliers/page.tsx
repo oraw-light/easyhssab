@@ -17,7 +17,7 @@ export default async function SuppliersPage() {
     <div className="space-y-8">
       <h2 className="text-2xl font-serif font-black">Fournisseurs</h2>
 
-      <form action={addSupplier} className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
+      <form action={addSupplier} className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <label className="flex flex-col gap-1 text-xs font-bold text-[#8C7B6E]">
           Nom
           <input type="text" name="name" required className="border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-sm" />
@@ -34,9 +34,11 @@ export default async function SuppliersPage() {
           Contact
           <input type="text" name="contactPerson" className="border-2 border-[#1A1A1A] rounded-xl px-3 py-2 text-sm" />
         </label>
-        <button type="submit" className="bg-[#1A1A1A] text-white text-xs font-extrabold uppercase tracking-widest rounded-xl py-2.5 px-4 hover:bg-[#C4A484] hover:text-[#1A1A1A] transition">
-          Ajouter
-        </button>
+        <div className="col-span-full flex justify-end pt-2 border-t border-gray-100">
+          <button type="submit" className="bg-[#1A1A1A] text-white text-xs font-extrabold uppercase tracking-widest rounded-xl py-2.5 px-6 hover:bg-[#C4A484] hover:text-[#1A1A1A] transition">
+            Ajouter
+          </button>
+        </div>
       </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
