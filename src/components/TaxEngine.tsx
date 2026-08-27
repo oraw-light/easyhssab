@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { TaxSettings, RevenueTransaction, PurchaseOrder, Employee } from '../types';
-import { Percent, ShieldAlert, BookOpen, Calculator, DollarSign, Scale, ArrowRight, CheckCircle } from 'lucide-react';
+import { TaxSettings, RevenueTransaction, ExpenseTransaction, PurchaseOrder, Employee } from '../types';
+import { Percent, ShieldAlert, BookOpen, Calculator, DollarSign, Scale, ArrowRight, CheckCircle, Receipt } from 'lucide-react';
+import { TvaDeclaration } from './TvaDeclaration';
 
 interface TaxEngineProps {
   revenues: RevenueTransaction[];
+  expenses: ExpenseTransaction[];
   purchases: PurchaseOrder[];
   employees: Employee[];
   taxSettings: TaxSettings;
@@ -14,6 +16,7 @@ interface TaxEngineProps {
 
 export const TaxEngine: React.FC<TaxEngineProps> = ({
   revenues,
+  expenses,
   purchases,
   employees,
   taxSettings,
@@ -21,7 +24,7 @@ export const TaxEngine: React.FC<TaxEngineProps> = ({
   onUpdateTaxSettings,
   language
 }) => {
-  const [activeTab, setActiveTab] = useState<'calculator' | 'regime' | 'amo'>('calculator');
+  const [activeTab, setActiveTab] = useState<'calculator' | 'regime' | 'amo' | 'tva'>('calculator');
   const [simulatedSales, setSimulatedSales] = useState('250000');
   const [simulatedExpenses, setSimulatedExpenses] = useState('140000');
 
@@ -128,12 +131,21 @@ export const TaxEngine: React.FC<TaxEngineProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('amo')}
-            className={`px-5 py-4 text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-5 py-4 text-xs font-extrabold uppercase tracking-wider border-r-2 border-[#1A1A1A] transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'amo' ? 'bg-white text-[#1A1A1A]' : 'text-[#8C7B6E] hover:bg-white/50 hover:text-[#1A1A1A]'
             }`}
           >
             <Percent className="w-4 h-4" />
             {language === 'FR' ? 'Barème de Charges Sociales' : 'Social Allocations Table'}
+          </button>
+          <button
+            onClick={() => setActiveTab('tva')}
+            className={`px-5 py-4 text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'tva' ? 'bg-white text-[#1A1A1A]' : 'text-[#8C7B6E] hover:bg-white/50 hover:text-[#1A1A1A]'
+            }`}
+          >
+            <Receipt className="w-4 h-4" />
+            {language === 'FR' ? 'Déclaration TVA' : 'VAT Declaration'}
           </button>
         </div>
 
@@ -342,6 +354,18 @@ export const TaxEngine: React.FC<TaxEngineProps> = ({
               </table>
             </div>
           </div>
+        )}
+
+        {/* Tab 4: TVA Declaration */}
+        {activeTab === 'tva' && (
+          <TvaDeclaration
+            revenues={revenues}
+            expenses={expenses}
+            purchases={purchases}
+            taxSettings={taxSettings}
+            currency={currency}
+            language={language}
+          />
         )}
       </div>
     </div>
