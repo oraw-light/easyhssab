@@ -1,0 +1,6 @@
+{
+  "name": "EasyHssab",
+  "description": "EasyHssab is a smart financial accounting and tax ledger SaaS for Moroccan cafés and shops, featuring automated expense tracking, live POS database integration, and corporate tax auditing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

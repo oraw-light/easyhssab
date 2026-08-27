@@ -1,0 +1,230 @@
+// prisma/schema.prisma
+// Production-ready database configuration for Moroccan SaaS Platform
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SectorType {
+  Cafe
+  Restaurant
+  Boulangerie
+  Snack
+  Glacier
+  Hotel
+  SalonDeThe
+  Epicerie
+  Boucherie
+  Poissonnerie
+  Primeur
+  Pharmacie
+  SalleDeSport
+  SalonDeCoiffure
+  InstitutDeBeaute
+  Boutique
+  Pressing
+  LocationVoitures
+  Garage
+  CommerceGros
+  Autre
+}
+
+enum PaymentMethod {
+  Cash
+  Card
+  Mobile
+  Transfer
+}
+
+enum PurchaseStatus {
+  Paid
+  Partial
+  Pending
+}
+
+enum LedgerType {
+  IN
+  OUT
+}
+
+model Establishment {
+  id          String     @id @default(uuid())
+  userId      String     @unique // Supabase Auth User ID (auth.users.id) — owner of this establishment
+  name        String
+  logo        String?    @default("")
+  address     String
+  phone       String
+  ice         String     @unique // Identifiant Commun de l\'Entreprise (15 digits)
+  ifNum       String     // Identifiant Fiscal
+  patenteNum  String     // Numéro de Patente
+  ville       String
+  commune     String
+  sector      SectorType @default(Cafe)
+  currency    String     @default("DH")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relationships
+  revenues     Revenue[]
+  expenses     Expense[]
+  suppliers    Supplier[]
+  employees    Employee[]
+  stockItems   StockItem[]
+  taxSettings  TaxSettings?
+  auditLogs    AuditLog[]
+}
+
+model Revenue {
+  id              String        @id @default(uuid())
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  date            DateTime      @default(now())
+  category        String
+  amount          Float
+  paymentMethod   PaymentMethod @default(Cash)
+  description     String?       @default("")
+  createdAt       DateTime      @default(now())
+
+  @@index([establishmentId, date])
+}
+
+model Expense {
+  id              String        @id @default(uuid())
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  date            DateTime      @default(now())
+  category        String        // Rent, Purchases, Utilities, Marketing, Salaries, etc.
+  amount          Float
+  description     String
+  isRecurring     Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  @@index([establishmentId, date])
+}
+
+model Supplier {
+  id              String          @id @default(uuid())
+  establishmentId String
+  establishment   Establishment   @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  name            String
+  phone           String?
+  email           String?
+  ice             String?         // Supplier ICE
+  contactPerson   String?
+  createdAt       DateTime        @default(now())
+  
+  purchases       PurchaseOrder[]
+
+  @@index([establishmentId])
+}
+
+model PurchaseOrder {
+  id            String         @id @default(uuid())
+  supplierId    String
+  supplier      Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  date          DateTime       @default(now())
+  itemsDesc     String
+  totalAmount   Float
+  paidAmount    Float          @default(0.0)
+  status        PurchaseStatus @default(Pending)
+  createdAt     DateTime       @default(now())
+
+  @@index([supplierId, date])
+}
+
+model Employee {
+  id              String        @id @default(uuid())
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  name            String
+  role            String
+  phone           String?
+  joinDate        DateTime      @default(now())
+  baseSalary      Float
+  cnssRegistered  Boolean       @default(true)
+  amoRegistered   Boolean       @default(true)
+  activeConges    Int           @default(0) // Available/Taken conges
+  createdAt       DateTime      @default(now())
+
+  payrolls        Payroll[]
+
+  @@index([establishmentId])
+}
+
+model Payroll {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date           DateTime @default(now())
+  baseSalary     Float
+  prime          Float    @default(0.0)
+  cnssDeduction  Float    @default(0.0)
+  amoDeduction   Float    @default(0.0)
+  netPaid        Float
+  month          String   // Format YYYY-MM
+  createdAt      DateTime @default(now())
+
+  @@index([employeeId, month])
+}
+
+model StockItem {
+  id              String        @id @default(uuid())
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  name            String
+  category        String
+  minStock        Float         @default(0.0)
+  currentStock    Float         @default(0.0)
+  unit            String        @default("Units")
+  unitCost        Float         @default(0.0)
+  createdAt       DateTime      @default(now())
+
+  ledgers         StockLedger[]
+
+  @@index([establishmentId])
+}
+
+model StockLedger {
+  id          String    @id @default(uuid())
+  itemId      String
+  stockItem   StockItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  date        DateTime  @default(now())
+  type        LedgerType
+  quantity    Float
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([itemId])
+}
+
+model TaxSettings {
+  id              String        @id @default(uuid())
+  establishmentId String        @unique
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  tvaRate         Float         @default(0.20) // Moroccan VAT (standard 20%, catering 10%)
+  isRate          Float         @default(0.15) // Impôt sur les Sociétés
+  irRate          Float         @default(0.10) // Impôt sur le Revenu
+  patenteRate     Float         @default(0.05) // Taxe de Patente
+  beverageTaxRate Float         @default(0.02) // Taxe sur les Débits de Boissons (catering)
+  cnssRate        Float         @default(0.0448) // Employee CNSS Contribution Rate
+  amoRate         Float         @default(0.0226) // Employee AMO Contribution Rate
+}
+
+model AuditLog {
+  id              String        @id @default(uuid())
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  userId          String?       // Supabase Auth User ID
+  action          String        // e.g. "CREATE_REVENUE", "UPDATE_STOCK"
+  details         String        // JSON string or summary
+  ipAddress       String?
+  createdAt       DateTime      @default(now())
+
+  @@index([establishmentId, createdAt])
+}
