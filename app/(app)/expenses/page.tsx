@@ -49,8 +49,8 @@ export default async function ExpensesPage() {
 
       <CsvImportForm action={bulkImportExpenses} columns="date, category, amount, description, isrecurring" />
 
-      <div className="bg-white rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] overflow-hidden">
-        <table className="w-full text-xs">
+      <div className="bg-white rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] overflow-x-auto">
+        <table className="w-full min-w-[560px] text-xs">
           <thead className="bg-[#F3F1ED] text-[#8C7B6E] uppercase font-extrabold">
             <tr>
               <th className="text-left p-4">Date</th>
