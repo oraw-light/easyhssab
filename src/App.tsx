@@ -1002,10 +1002,11 @@ export default function App() {
           {/* TAB 6: SUPPLIERS & PURCHASES MODULE */}
           {activeTab === 'Suppliers' && (
             <div className="animate-fade-in">
-              <SupplierManager 
+              <SupplierManager
                 suppliers={suppliers}
                 purchases={purchases}
                 currency={currency}
+                establishment={establishment}
                 onAddSupplier={handleAddSupplier}
                 onAddPurchase={handleAddPurchase}
                 onAmortizeDue={handleAmortizeDue}

@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react';
 import { db } from '@/lib/db';
 import { requireEstablishment } from '@/lib/establishment';
 import { addSupplier, deleteSupplier, addPurchaseOrder } from '@/actions/suppliers';
+import InvoiceButton from '../_components/InvoiceButton';
 
 export default async function SuppliersPage() {
   const establishment = await requireEstablishment();
@@ -56,10 +57,39 @@ export default async function SuppliersPage() {
 
             <div className="space-y-1.5">
               {sup.purchases.map(p => (
-                <div key={p.id} className="flex justify-between text-[10px] font-bold text-[#8C7B6E]">
-                  <span>{p.date.toISOString().split('T')[0]} &bull; {p.itemsDesc}</span>
-                  <span className={p.status === 'Paid' ? 'text-green-700' : p.status === 'Partial' ? 'text-amber-700' : 'text-red-600'}>
-                    {currency}{p.totalAmount.toLocaleString()} ({p.status})
+                <div key={p.id} className="flex justify-between items-center gap-2 text-[10px] font-bold text-[#8C7B6E]">
+                  <span className="truncate">{p.date.toISOString().split('T')[0]} &bull; {p.itemsDesc}</span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <span className={p.status === 'Paid' ? 'text-green-700' : p.status === 'Partial' ? 'text-amber-700' : 'text-red-600'}>
+                      {currency}{p.totalAmount.toLocaleString()} ({p.status})
+                    </span>
+                    <InvoiceButton
+                      order={{
+                        id: p.id,
+                        date: p.date.toISOString().split('T')[0],
+                        itemsDesc: p.itemsDesc,
+                        totalAmount: p.totalAmount,
+                        paidAmount: p.paidAmount,
+                      }}
+                      supplier={{
+                        name: sup.name,
+                        phone: sup.phone,
+                        email: sup.email,
+                        ice: sup.ice,
+                        contactPerson: sup.contactPerson,
+                      }}
+                      establishment={{
+                        name: establishment.name,
+                        address: establishment.address,
+                        phone: establishment.phone,
+                        ice: establishment.ice,
+                        ifNum: establishment.ifNum,
+                        patenteNum: establishment.patenteNum,
+                        ville: establishment.ville,
+                        commune: establishment.commune,
+                      }}
+                      currency={currency}
+                    />
                   </span>
                 </div>
               ))}
