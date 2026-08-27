@@ -1018,8 +1018,9 @@ export default function App() {
           {/* TAB 7: TAX ENGINE COMPONENT */}
           {activeTab === 'Taxes' && (
             <div className="animate-fade-in">
-              <TaxEngine 
+              <TaxEngine
                 revenues={revenues}
+                expenses={expenses}
                 purchases={purchases}
                 employees={employees}
                 taxSettings={taxSettings}
