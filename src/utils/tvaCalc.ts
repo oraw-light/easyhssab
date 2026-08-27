@@ -78,6 +78,9 @@ export function computeTvaDeclaration(
   rate: number,
   period: PeriodRange
 ): TvaDeclarationResult {
+  // Invoice basis (not cash/encaissement basis): amounts count in the period they're
+  // dated, regardless of payment status. Simplified for this demo but consistent on
+  // both the collected (revenues) and deductible (purchases/expenses) sides.
   const inPeriod = (dateISO: string) => dateISO >= period.startISO && dateISO <= period.endISO;
   const extractTVA = (ttc: number) => ttc * (rate / (1 + rate));
 
