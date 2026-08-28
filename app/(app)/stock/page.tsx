@@ -1,14 +1,16 @@
 import { Trash2, AlertTriangle } from 'lucide-react';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { addStockItem, deleteStockItem, adjustStock } from '@/actions/stock';
 
 export default async function StockPage() {
   const establishment = await requireEstablishment();
-  const items = await db.stockItem.findMany({
-    where: { establishmentId: establishment.id },
-    orderBy: { name: 'asc' },
-  });
+  const { data } = await createAdminClient()
+    .from('StockItem')
+    .select('*')
+    .eq('establishmentId', establishment.id)
+    .order('name', { ascending: true });
+  const items = data ?? [];
   const currency = establishment.currency;
 
   return (

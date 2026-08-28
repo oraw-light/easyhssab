@@ -1,15 +1,17 @@
 import { Trash2 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { addRevenue, deleteRevenue, bulkImportRevenues } from '@/actions/revenues';
 import CsvImportForm from '../_components/CsvImportForm';
 
 export default async function RevenuesPage() {
   const establishment = await requireEstablishment();
-  const revenues = await db.revenue.findMany({
-    where: { establishmentId: establishment.id },
-    orderBy: { date: 'desc' },
-  });
+  const { data } = await createAdminClient()
+    .from('Revenue')
+    .select('*')
+    .eq('establishmentId', establishment.id)
+    .order('date', { ascending: false });
+  const revenues = data ?? [];
   const currency = establishment.currency;
   const total = revenues.reduce((sum, r) => sum + r.amount, 0);
 
@@ -65,7 +67,7 @@ export default async function RevenuesPage() {
           <tbody>
             {revenues.map(r => (
               <tr key={r.id} className="border-t border-gray-100">
-                <td className="p-4 font-bold">{r.date.toISOString().split('T')[0]}</td>
+                <td className="p-4 font-bold">{new Date(r.date).toISOString().split('T')[0]}</td>
                 <td className="p-4">{r.category}</td>
                 <td className="p-4">{r.paymentMethod}</td>
                 <td className="p-4 text-right font-mono font-black text-green-700">+{currency}{r.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

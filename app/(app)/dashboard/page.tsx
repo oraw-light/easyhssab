@@ -1,29 +1,30 @@
 import { TrendingUp, TrendingDown, DollarSign, Sparkles } from 'lucide-react';
-import { db } from '../../../lib/db';
+import { createAdminClient } from '../../../lib/supabase/admin';
 import { requireEstablishment } from '../../../lib/establishment';
 import { calculateFinancialSummary } from '../../../lib/calculations';
 
 export default async function DashboardPage() {
   const establishment = await requireEstablishment();
+  const db = createAdminClient();
 
-  const [revenues, expenses, employees, taxSettings] = await Promise.all([
-    db.revenue.findMany({ where: { establishmentId: establishment.id }, orderBy: { date: 'desc' }, take: 5 }),
-    db.expense.findMany({ where: { establishmentId: establishment.id }, orderBy: { date: 'desc' }, take: 5 }),
-    db.employee.findMany({ where: { establishmentId: establishment.id } }),
-    db.taxSettings.findUniqueOrThrow({ where: { establishmentId: establishment.id } }),
+  const [{ data: revenues }, { data: expenses }, { data: employees }, { data: taxSettings }] = await Promise.all([
+    db.from('Revenue').select('*').eq('establishmentId', establishment.id).order('date', { ascending: false }).limit(5),
+    db.from('Expense').select('*').eq('establishmentId', establishment.id).order('date', { ascending: false }).limit(5),
+    db.from('Employee').select('*').eq('establishmentId', establishment.id),
+    db.from('TaxSettings').select('*').eq('establishmentId', establishment.id).single(),
   ]);
 
   // The dashboard's KPI totals are all-time, so they need the full revenue/expense sets, not just the recent-5 preview above.
-  const [allRevenues, allExpenses] = await Promise.all([
-    db.revenue.findMany({ where: { establishmentId: establishment.id }, select: { amount: true } }),
-    db.expense.findMany({ where: { establishmentId: establishment.id }, select: { amount: true } }),
+  const [{ data: allRevenues }, { data: allExpenses }] = await Promise.all([
+    db.from('Revenue').select('amount').eq('establishmentId', establishment.id),
+    db.from('Expense').select('amount').eq('establishmentId', establishment.id),
   ]);
 
   const summary = calculateFinancialSummary({
-    revenues: allRevenues,
-    expenses: allExpenses,
-    employees,
-    taxSettings,
+    revenues: allRevenues ?? [],
+    expenses: allExpenses ?? [],
+    employees: employees ?? [],
+    taxSettings: taxSettings!,
   });
 
   const currency = establishment.currency;
@@ -76,7 +77,7 @@ export default async function DashboardPage() {
             <div className="w-2.5 h-2.5 rounded-full bg-[#FFB74D] shadow-[0_0_8px_#FFB74D]" />
           </div>
           <div className="text-[10px] font-bold text-[#AFA9A0] uppercase">
-            Calculé sur taux progressif de {(taxSettings.isRate * 100).toFixed(0)}%
+            Calculé sur taux progressif de {(taxSettings!.isRate * 100).toFixed(0)}%
           </div>
         </div>
 
@@ -102,11 +103,11 @@ export default async function DashboardPage() {
         <div className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
           <h4 className="text-sm font-black uppercase text-[#1A1A1A] border-b border-gray-100 pb-3 mb-4">Dernières Ventes Enregistrées</h4>
           <div className="space-y-3.5">
-            {revenues.map(rev => (
+            {(revenues ?? []).map(rev => (
               <div key={rev.id} className="flex justify-between items-center text-xs">
                 <div className="space-y-0.5">
                   <div className="font-bold text-[#1A1A1A]">{rev.category}</div>
-                  <div className="text-[10px] text-[#8C7B6E] font-bold">{rev.date.toISOString().split('T')[0]} &bull; {rev.paymentMethod}</div>
+                  <div className="text-[10px] text-[#8C7B6E] font-bold">{new Date(rev.date).toISOString().split('T')[0]} &bull; {rev.paymentMethod}</div>
                 </div>
                 <div className="font-mono font-black text-green-700">
                   +{currency}{rev.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -119,11 +120,11 @@ export default async function DashboardPage() {
         <div className="bg-white p-6 rounded-3xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
           <h4 className="text-sm font-black uppercase text-[#1A1A1A] border-b border-gray-100 pb-3 mb-4">Charges d&apos;Exploitation Récentes</h4>
           <div className="space-y-3.5">
-            {expenses.map(exp => (
+            {(expenses ?? []).map(exp => (
               <div key={exp.id} className="flex justify-between items-center text-xs">
                 <div className="space-y-0.5">
                   <div className="font-bold text-[#1A1A1A]">{exp.description}</div>
-                  <div className="text-[10px] text-[#8C7B6E] font-bold">{exp.date.toISOString().split('T')[0]} &bull; {exp.category}</div>
+                  <div className="text-[10px] text-[#8C7B6E] font-bold">{new Date(exp.date).toISOString().split('T')[0]} &bull; {exp.category}</div>
                 </div>
                 <div className="font-mono font-black text-red-600">
                   -{currency}{exp.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}

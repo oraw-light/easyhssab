@@ -1,16 +1,19 @@
 import { Trash2 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { addSupplier, deleteSupplier, addPurchaseOrder } from '@/actions/suppliers';
 import InvoiceButton from '../_components/InvoiceButton';
 
 export default async function SuppliersPage() {
   const establishment = await requireEstablishment();
-  const suppliers = await db.supplier.findMany({
-    where: { establishmentId: establishment.id },
-    include: { purchases: { orderBy: { date: 'desc' }, take: 3 } },
-    orderBy: { name: 'asc' },
-  });
+  const { data } = await createAdminClient()
+    .from('Supplier')
+    .select('*, purchases:PurchaseOrder(*)')
+    .eq('establishmentId', establishment.id)
+    .order('name', { ascending: true })
+    .order('date', { foreignTable: 'PurchaseOrder', ascending: false })
+    .limit(3, { foreignTable: 'PurchaseOrder' });
+  const suppliers = data ?? [];
   const currency = establishment.currency;
 
   return (
@@ -58,9 +61,9 @@ export default async function SuppliersPage() {
             </div>
 
             <div className="space-y-1.5">
-              {sup.purchases.map(p => (
+              {sup.purchases.map((p: { id: string; date: string; itemsDesc: string; totalAmount: number; paidAmount: number; status: string }) => (
                 <div key={p.id} className="flex justify-between items-center gap-2 text-[10px] font-bold text-[#8C7B6E]">
-                  <span className="truncate">{p.date.toISOString().split('T')[0]} &bull; {p.itemsDesc}</span>
+                  <span className="truncate">{new Date(p.date).toISOString().split('T')[0]} &bull; {p.itemsDesc}</span>
                   <span className="flex items-center gap-2 shrink-0">
                     <span className={p.status === 'Paid' ? 'text-green-700' : p.status === 'Partial' ? 'text-amber-700' : 'text-red-600'}>
                       {currency}{p.totalAmount.toLocaleString()} ({p.status})
@@ -68,7 +71,7 @@ export default async function SuppliersPage() {
                     <InvoiceButton
                       order={{
                         id: p.id,
-                        date: p.date.toISOString().split('T')[0],
+                        date: new Date(p.date).toISOString().split('T')[0],
                         itemsDesc: p.itemsDesc,
                         totalAmount: p.totalAmount,
                         paidAmount: p.paidAmount,

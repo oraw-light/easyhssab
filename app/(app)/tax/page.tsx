@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { updateTaxSettings } from '@/actions/tax';
 import { calculateFinancialSummary, calculateNetVATPayable, calculatePatente, calculateBeverageTax, isCateringSector } from '@/lib/calculations';
@@ -15,15 +15,17 @@ const RATE_FIELDS = [
 
 export default async function TaxPage() {
   const establishment = await requireEstablishment();
-  const [taxSettings, revenues, expenses, employees] = await Promise.all([
-    db.taxSettings.findUniqueOrThrow({ where: { establishmentId: establishment.id } }),
-    db.revenue.findMany({ where: { establishmentId: establishment.id }, select: { amount: true } }),
-    db.expense.findMany({ where: { establishmentId: establishment.id }, select: { amount: true } }),
-    db.employee.findMany({ where: { establishmentId: establishment.id } }),
+  const db = createAdminClient();
+  const [{ data: taxSettingsRow }, { data: revenues }, { data: expenses }, { data: employees }] = await Promise.all([
+    db.from('TaxSettings').select('*').eq('establishmentId', establishment.id).single(),
+    db.from('Revenue').select('amount').eq('establishmentId', establishment.id),
+    db.from('Expense').select('amount').eq('establishmentId', establishment.id),
+    db.from('Employee').select('*').eq('establishmentId', establishment.id),
   ]);
+  const taxSettings = taxSettingsRow!;
   const currency = establishment.currency;
 
-  const summary = calculateFinancialSummary({ revenues, expenses, employees, taxSettings });
+  const summary = calculateFinancialSummary({ revenues: revenues ?? [], expenses: expenses ?? [], employees: employees ?? [], taxSettings });
 
   const vat = calculateNetVATPayable({
     totalRevenueTTC: summary.totalRevenue,

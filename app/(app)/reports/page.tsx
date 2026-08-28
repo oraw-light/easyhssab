@@ -1,30 +1,31 @@
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { calculateFinancialSummary } from '@/lib/calculations';
 
 export default async function ReportsPage() {
   const establishment = await requireEstablishment();
-  const [revenues, expenses, employees, taxSettings, stockItems, suppliers] = await Promise.all([
-    db.revenue.findMany({ where: { establishmentId: establishment.id } }),
-    db.expense.findMany({ where: { establishmentId: establishment.id } }),
-    db.employee.findMany({ where: { establishmentId: establishment.id } }),
-    db.taxSettings.findUniqueOrThrow({ where: { establishmentId: establishment.id } }),
-    db.stockItem.findMany({ where: { establishmentId: establishment.id } }),
-    db.supplier.count({ where: { establishmentId: establishment.id } }),
+  const db = createAdminClient();
+  const [{ data: revenues }, { data: expenses }, { data: employees }, { data: taxSettings }, { data: stockItems }, { count: suppliers }] = await Promise.all([
+    db.from('Revenue').select('*').eq('establishmentId', establishment.id),
+    db.from('Expense').select('*').eq('establishmentId', establishment.id),
+    db.from('Employee').select('*').eq('establishmentId', establishment.id),
+    db.from('TaxSettings').select('*').eq('establishmentId', establishment.id).single(),
+    db.from('StockItem').select('*').eq('establishmentId', establishment.id),
+    db.from('Supplier').select('*', { count: 'exact', head: true }).eq('establishmentId', establishment.id),
   ]);
   const currency = establishment.currency;
 
-  const summary = calculateFinancialSummary({ revenues, expenses, employees, taxSettings });
+  const summary = calculateFinancialSummary({ revenues: revenues ?? [], expenses: expenses ?? [], employees: employees ?? [], taxSettings: taxSettings! });
 
-  const revenueByCategory = revenues.reduce<Record<string, number>>((acc, r) => {
+  const revenueByCategory = (revenues ?? []).reduce<Record<string, number>>((acc, r) => {
     acc[r.category] = (acc[r.category] ?? 0) + r.amount;
     return acc;
   }, {});
-  const expenseByCategory = expenses.reduce<Record<string, number>>((acc, e) => {
+  const expenseByCategory = (expenses ?? []).reduce<Record<string, number>>((acc, e) => {
     acc[e.category] = (acc[e.category] ?? 0) + e.amount;
     return acc;
   }, {});
-  const stockValue = stockItems.reduce((sum, i) => sum + i.currentStock * i.unitCost, 0);
+  const stockValue = (stockItems ?? []).reduce((sum, i) => sum + i.currentStock * i.unitCost, 0);
 
   return (
     <div className="space-y-8">
@@ -34,7 +35,7 @@ export default async function ReportsPage() {
         <ReportCard label="Résultat Net" value={`${currency}${summary.netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         <ReportCard label="Marge Bénéficiaire" value={`${summary.profitMarginPct.toFixed(1)}%`} />
         <ReportCard label="Valeur du Stock" value={`${currency}${stockValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
-        <ReportCard label="Fournisseurs Actifs" value={String(suppliers)} />
+        <ReportCard label="Fournisseurs Actifs" value={String(suppliers ?? 0)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

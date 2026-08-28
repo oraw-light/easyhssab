@@ -1,15 +1,17 @@
 import { Trash2 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { addExpense, deleteExpense, bulkImportExpenses } from '@/actions/expenses';
 import CsvImportForm from '../_components/CsvImportForm';
 
 export default async function ExpensesPage() {
   const establishment = await requireEstablishment();
-  const expenses = await db.expense.findMany({
-    where: { establishmentId: establishment.id },
-    orderBy: { date: 'desc' },
-  });
+  const { data } = await createAdminClient()
+    .from('Expense')
+    .select('*')
+    .eq('establishmentId', establishment.id)
+    .order('date', { ascending: false });
+  const expenses = data ?? [];
   const currency = establishment.currency;
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
@@ -63,7 +65,7 @@ export default async function ExpensesPage() {
           <tbody>
             {expenses.map(e => (
               <tr key={e.id} className="border-t border-gray-100">
-                <td className="p-4 font-bold">{e.date.toISOString().split('T')[0]}</td>
+                <td className="p-4 font-bold">{new Date(e.date).toISOString().split('T')[0]}</td>
                 <td className="p-4">{e.category}{e.isRecurring && <span className="ml-1.5 text-[9px] bg-[#C4A484] text-[#1A1A1A] px-1.5 py-0.5 rounded font-black">RÉCURRENT</span>}</td>
                 <td className="p-4">{e.description}</td>
                 <td className="p-4 text-right font-mono font-black text-red-600">-{currency}{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

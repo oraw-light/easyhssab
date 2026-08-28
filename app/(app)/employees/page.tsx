@@ -1,15 +1,18 @@
 import { Trash2 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { addEmployee, deleteEmployee, runPayroll } from '@/actions/employees';
 
 export default async function EmployeesPage() {
   const establishment = await requireEstablishment();
-  const employees = await db.employee.findMany({
-    where: { establishmentId: establishment.id },
-    include: { payrolls: { orderBy: { date: 'desc' }, take: 1 } },
-    orderBy: { name: 'asc' },
-  });
+  const { data } = await createAdminClient()
+    .from('Employee')
+    .select('*, payrolls:Payroll(*)')
+    .eq('establishmentId', establishment.id)
+    .order('name', { ascending: true })
+    .order('date', { foreignTable: 'Payroll', ascending: false })
+    .limit(1, { foreignTable: 'Payroll' });
+  const employees = data ?? [];
   const currency = establishment.currency;
 
   return (

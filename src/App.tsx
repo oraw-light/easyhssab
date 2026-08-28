@@ -449,7 +449,7 @@ export default function App() {
     <div className="min-h-screen bg-[#F9F7F2] text-[#1A1A1A] antialiased font-sans flex flex-col lg:flex-row" dir={language === 'AR' ? 'rtl' : 'ltr'}>
       
       {/* 1. Left Vertical Sidebar Navigation */}
-      <aside className="w-full lg:w-72 bg-[#1A1A1A] text-white flex flex-col justify-between shrink-0 border-b-2 lg:border-b-0 lg:border-r-2 border-[#1A1A1A]">
+      <aside className="w-full lg:w-72 bg-[#1A1A1A] text-white flex flex-col justify-between shrink-0 border-b-2 lg:border-b-0 lg:border-r-2 border-[#1A1A1A] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
         <div>
           {/* Header & Establishment Badge */}
           <div className="p-6 border-b border-white/10 space-y-3">

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { db } from './db';
+import { createAdminClient } from './supabase/admin';
 import { createClient } from './supabase/server';
 import { DEMO_USER_ID } from './demoUser';
 
@@ -9,7 +9,13 @@ export async function requireEstablishment() {
   const { data: { user } } = await supabase.auth.getUser();
   const userId = user?.id ?? DEMO_USER_ID;
 
-  const establishment = await db.establishment.findUnique({ where: { userId } });
+  const admin = createAdminClient();
+  const { data: establishment } = await admin
+    .from('Establishment')
+    .select('*')
+    .eq('userId', userId)
+    .maybeSingle();
+
   if (!establishment) redirect('/onboarding');
 
   return establishment;

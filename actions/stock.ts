@@ -1,22 +1,20 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 
 export async function addStockItem(formData: FormData) {
   const establishment = await requireEstablishment();
 
-  await db.stockItem.create({
-    data: {
-      establishmentId: establishment.id,
-      name: String(formData.get('name')),
-      category: String(formData.get('category')),
-      minStock: Number(formData.get('minStock')),
-      currentStock: Number(formData.get('currentStock')),
-      unit: String(formData.get('unit')),
-      unitCost: Number(formData.get('unitCost')),
-    },
+  await createAdminClient().from('StockItem').insert({
+    establishmentId: establishment.id,
+    name: String(formData.get('name')),
+    category: String(formData.get('category')),
+    minStock: Number(formData.get('minStock')),
+    currentStock: Number(formData.get('currentStock')),
+    unit: String(formData.get('unit')),
+    unitCost: Number(formData.get('unitCost')),
   });
 
   revalidatePath('/stock');
@@ -26,7 +24,7 @@ export async function deleteStockItem(formData: FormData) {
   const establishment = await requireEstablishment();
   const id = String(formData.get('id'));
 
-  await db.stockItem.deleteMany({ where: { id, establishmentId: establishment.id } });
+  await createAdminClient().from('StockItem').delete().eq('id', id).eq('establishmentId', establishment.id);
 
   revalidatePath('/stock');
 }
@@ -38,13 +36,14 @@ export async function adjustStock(formData: FormData) {
   const quantity = Number(formData.get('quantity'));
   const notes = String(formData.get('notes') ?? '');
 
-  await db.$transaction([
-    db.stockLedger.create({ data: { itemId, type, quantity, notes } }),
-    db.stockItem.update({
-      where: { id: itemId },
-      data: { currentStock: { [type === 'IN' ? 'increment' : 'decrement']: quantity } },
-    }),
-  ]);
+  const db = createAdminClient();
+  const { data: item } = await db.from('StockItem').select('currentStock').eq('id', itemId).single();
+  if (!item) throw new Error('Stock item not found');
+
+  await db.from('StockLedger').insert({ itemId, type, quantity, notes });
+  await db.from('StockItem').update({
+    currentStock: item.currentStock + (type === 'IN' ? quantity : -quantity),
+  }).eq('id', itemId);
 
   revalidatePath('/stock');
 }

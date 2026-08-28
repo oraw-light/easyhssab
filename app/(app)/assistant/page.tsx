@@ -1,26 +1,27 @@
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { calculateFinancialSummary } from '@/lib/calculations';
 import AssistantChat from './AssistantChat';
 
 export default async function AssistantPage() {
   const establishment = await requireEstablishment();
-  const [revenues, expenses, employees, taxSettings, stockItems] = await Promise.all([
-    db.revenue.findMany({ where: { establishmentId: establishment.id }, select: { amount: true } }),
-    db.expense.findMany({ where: { establishmentId: establishment.id }, select: { amount: true } }),
-    db.employee.findMany({ where: { establishmentId: establishment.id } }),
-    db.taxSettings.findUniqueOrThrow({ where: { establishmentId: establishment.id } }),
-    db.stockItem.findMany({ where: { establishmentId: establishment.id } }),
+  const db = createAdminClient();
+  const [{ data: revenues }, { data: expenses }, { data: employees }, { data: taxSettings }, { data: stockItems }] = await Promise.all([
+    db.from('Revenue').select('amount').eq('establishmentId', establishment.id),
+    db.from('Expense').select('amount').eq('establishmentId', establishment.id),
+    db.from('Employee').select('*').eq('establishmentId', establishment.id),
+    db.from('TaxSettings').select('*').eq('establishmentId', establishment.id).single(),
+    db.from('StockItem').select('*').eq('establishmentId', establishment.id),
   ]);
 
-  const summary = calculateFinancialSummary({ revenues, expenses, employees, taxSettings });
+  const summary = calculateFinancialSummary({ revenues: revenues ?? [], expenses: expenses ?? [], employees: employees ?? [], taxSettings: taxSettings! });
 
   const financeData = {
     establishment: { name: establishment.name, sector: establishment.sector, currency: establishment.currency },
     summary,
     taxSettings,
-    stockLowCount: stockItems.filter(i => i.currentStock <= i.minStock).length,
-    employeeCount: employees.length,
+    stockLowCount: (stockItems ?? []).filter(i => i.currentStock <= i.minStock).length,
+    employeeCount: (employees ?? []).length,
   };
 
   return (

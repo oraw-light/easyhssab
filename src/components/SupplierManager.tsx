@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Supplier, PurchaseOrder, EstablishmentInfo } from '../types';
-import { Truck, PlusCircle, CreditCard, DollarSign, List, Shield, User, Trash2, CheckCircle, FileText } from 'lucide-react';
-import { InvoiceModal } from './InvoiceModal';
+import { Truck, PlusCircle, CreditCard, DollarSign, List, Shield, User, Trash2, CheckCircle } from 'lucide-react';
 
 interface SupplierManagerProps {
   suppliers: Supplier[];
@@ -25,7 +24,6 @@ export const SupplierManager: React.FC<SupplierManagerProps> = ({
   language
 }) => {
   const [activeTab, setActiveTab] = useState<'suppliers' | 'orders'>('suppliers');
-  const [invoicingOrder, setInvoicingOrder] = useState<PurchaseOrder | null>(null);
   
   // State for Add Supplier form
   const [name, setName] = useState('');
@@ -458,7 +456,6 @@ export const SupplierManager: React.FC<SupplierManagerProps> = ({
                       <th className="py-3 px-4 text-right">{language === 'FR' ? 'Total' : 'Total'}</th>
                       <th className="py-3 px-4 text-right">{language === 'FR' ? 'Payé' : 'Paid'}</th>
                       <th className="py-3 px-4 text-center">{language === 'FR' ? 'Statut' : 'Status'}</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -484,20 +481,11 @@ export const SupplierManager: React.FC<SupplierManagerProps> = ({
                             {order.status === 'Paid' ? (language === 'FR' ? 'RÉGLÉ' : 'PAID') : order.status === 'Partial' ? (language === 'FR' ? 'PARTIEL' : 'PARTIAL') : (language === 'FR' ? 'DÛ' : 'PENDING')}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => setInvoicingOrder(order)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#F3F1ED] hover:bg-[#1A1A1A] hover:text-white border border-[#1A1A1A]/20 text-[#1A1A1A] text-[10px] font-black rounded-lg cursor-pointer transition uppercase"
-                          >
-                            <FileText className="w-3 h-3" />
-                            {language === 'FR' ? 'Facture' : 'Invoice'}
-                          </button>
-                        </td>
                       </tr>
                     ))}
                     {purchases.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="text-center py-8 text-gray-400 italic">
+                        <td colSpan={6} className="text-center py-8 text-gray-400 italic">
                           {language === 'FR' ? 'Aucune commande enregistrée.' : 'No purchases logged.'}
                         </td>
                       </tr>
@@ -509,17 +497,6 @@ export const SupplierManager: React.FC<SupplierManagerProps> = ({
           </div>
         )}
       </div>
-
-      {invoicingOrder && (
-        <InvoiceModal
-          order={invoicingOrder}
-          supplier={suppliers.find(s => s.id === invoicingOrder.supplierId)}
-          establishment={establishment}
-          currency={currency}
-          language={language}
-          onClose={() => setInvoicingOrder(null)}
-        />
-      )}
     </div>
   );
 };

@@ -1,25 +1,24 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireEstablishment } from '@/lib/establishment';
 import { parseCSV, csvRowsToObjects } from '@/lib/csv';
-import type { PaymentMethod } from '@prisma/client';
+
+type PaymentMethod = 'Cash' | 'Card' | 'Mobile' | 'Transfer';
 
 const VALID_PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'Mobile', 'Transfer'];
 
 export async function addRevenue(formData: FormData) {
   const establishment = await requireEstablishment();
 
-  await db.revenue.create({
-    data: {
-      establishmentId: establishment.id,
-      date: new Date(String(formData.get('date'))),
-      category: String(formData.get('category')),
-      amount: Number(formData.get('amount')),
-      paymentMethod: String(formData.get('paymentMethod')) as PaymentMethod,
-      description: String(formData.get('description') ?? ''),
-    },
+  await createAdminClient().from('Revenue').insert({
+    establishmentId: establishment.id,
+    date: String(formData.get('date')),
+    category: String(formData.get('category')),
+    amount: Number(formData.get('amount')),
+    paymentMethod: String(formData.get('paymentMethod')) as PaymentMethod,
+    description: String(formData.get('description') ?? ''),
   });
 
   revalidatePath('/revenues');
@@ -30,7 +29,7 @@ export async function deleteRevenue(formData: FormData) {
   const establishment = await requireEstablishment();
   const id = String(formData.get('id'));
 
-  await db.revenue.deleteMany({ where: { id, establishmentId: establishment.id } });
+  await createAdminClient().from('Revenue').delete().eq('id', id).eq('establishmentId', establishment.id);
 
   revalidatePath('/revenues');
   revalidatePath('/dashboard');
@@ -52,18 +51,18 @@ export async function bulkImportRevenues(formData: FormData): Promise<{ error?: 
         : 'Cash';
       return {
         establishmentId: establishment.id,
-        date: new Date(r.date),
+        date: r.date,
         category: r.category,
         amount,
         paymentMethod,
         description: r.description ?? '',
       };
     })
-    .filter(r => !isNaN(r.amount) && !isNaN(r.date.getTime()));
+    .filter(r => !isNaN(r.amount) && !isNaN(new Date(r.date).getTime()));
 
   if (data.length === 0) return { error: 'Aucune ligne valide trouvée dans le fichier CSV.' };
 
-  await db.revenue.createMany({ data });
+  await createAdminClient().from('Revenue').insert(data);
 
   revalidatePath('/revenues');
   revalidatePath('/dashboard');
