@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F9F7F2] text-[#1A1A1A] antialiased font-sans flex flex-col lg:flex-row">
-      <aside className="bg-[#1A1A1A] text-white flex flex-col shrink-0 lg:w-72 lg:justify-between border-b-2 lg:border-b-0 lg:border-r-2 border-[#1A1A1A] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+      <aside className="bg-[#1A1A1A] text-white flex flex-col shrink-0 lg:w-72 lg:justify-between border-b-2 lg:border-b-0 lg:border-r-2 border-[#1A1A1A] lg:sticky lg:top-0 lg:self-start lg:h-screen lg:overflow-y-auto">
         <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between gap-3">
           <h1 className="font-serif font-black text-base tracking-wide flex items-center gap-1">
             EasyHssab <span className="text-[9px] bg-[#C4A484] text-[#1A1A1A] px-1 py-0.5 rounded font-black tracking-normal">SaaS</span>
